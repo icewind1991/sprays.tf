@@ -2,8 +2,21 @@
 <html>
 	<head>
 		<title>stamps.tf</title>
+		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
-		<script src="bundle.js"/>
+		<form id="input" enctype="multipart/form-data">
+			<div id="droparea">
+				Drop image or click to start
+			</div>
+			<input type="file" name="demo" id="file">
+
+			<p class="demo-info"><span id="upload-map"></span><span id="upload-time" class="time"></span></p>
+		</form>
+		<hr/>
+		<div id="edit">
+			<canvas id="image"></canvas>
+		</div>
+		<script src="bundle.js"></script>
 	</body>
 </html>

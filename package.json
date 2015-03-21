@@ -8,6 +8,8 @@
 		"tf2"
 	],
 	"dependencies": {
-		"vtf": "*"
+		"vtf": "*",
+		"domready": "*",
+		"jquery": "*"
 	}
 }
