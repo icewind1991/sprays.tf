@@ -1,6 +1,5 @@
 var domready = require('domready');
 var Cropper = require('./crop');
-var vtf = require('vtf');
 
 var selection = null;
 
@@ -114,21 +113,25 @@ domready(function () {
 		if (!selection || saving) {
 			return;
 		}
+		var saveButton = $('button-save');
 		saving = true;
-		$('button-save').disabled = 'disabled';
-		$('button-save').textContent = 'Working...';
-		setTimeout(function () {
-			var data = selection.getResults();
-			var targetSize = getTargetWidth(selection.getWidth());
-			if (selection.getWidth() != targetSize) {
-				data = resize(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
-			}
-			var targetData = vtf.fromRGBA(data, targetSize, targetSize);
+		saveButton.disabled = 'disabled';
+		saveButton.textContent = 'Working...';
+		var data = selection.getResults();
+		var targetSize = getTargetWidth(selection.getWidth());
+		if (selection.getWidth() != targetSize) {
+			data = resize(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
+		}
+		var worker = new Worker("worker-bundle.js");
+		worker.onmessage = function (e) {
+			var targetData = e.data;
+			console.log(targetData);
 			saveData(targetData, 'spray.vtf');
 			saving = false;
-			$('button-save').textContent = 'Save';
-			$('button-save').disabled = null;
-		}, 1);
+			saveButton.textContent = 'Save';
+			saveButton.disabled = null;
+		};
+		worker.postMessage({data: data, size: targetSize});
 	};
 
 	var dropArea = $('droparea');
