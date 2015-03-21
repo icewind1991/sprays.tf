@@ -6,7 +6,6 @@ var selection = null;
 var $ = document.getElementById.bind(document);
 
 function handleFile(file) {
-	console.log(file);
 	var canvas = $('image');
 	fileToCanvas(canvas, file, function (image) {
 		$('input').className = 'hidden';
@@ -125,7 +124,6 @@ domready(function () {
 		var worker = new Worker("worker-bundle.js");
 		worker.onmessage = function (e) {
 			var targetData = e.data;
-			console.log(targetData);
 			saveData(targetData, 'spray.vtf');
 			saving = false;
 			saveButton.textContent = 'Save';

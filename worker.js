@@ -1,6 +1,6 @@
 var vtf = require('vtf');
 
-self.onmessage = function (input) {
-	var targetData = vtf.fromRGBA(input.data, input.size, input.size);
+self.onmessage = function (e) {
+	var targetData = vtf.fromRGBA(e.data.data, e.data.size, e.data.size);
 	postMessage(targetData);
 };
