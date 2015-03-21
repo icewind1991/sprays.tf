@@ -5,6 +5,17 @@
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
+		<header class="home-menu pure-menu pure-menu-open pure-menu-horizontal pure-menu-fixed">
+			<span class="pure-menu-heading active">sprays.tf</span>
+			<ul>
+				<li>
+					<button id="button-new" class="pure-button">New</button>
+				</li>
+				<li>
+					<button id="button-save" class="pure-button pure-button-primary">Save</button>
+				</li>
+			</ul>
+		</header>
 		<form id="input" enctype="multipart/form-data">
 			<div id="droparea">
 				Drop image or click to start
@@ -13,8 +24,7 @@
 
 			<p class="demo-info"><span id="upload-map"></span><span id="upload-time" class="time"></span></p>
 		</form>
-		<hr/>
-		<div id="edit">
+		<div id="edit" class="hidden">
 			<canvas id="image"></canvas>
 		</div>
 		<script src="bundle.js"></script>

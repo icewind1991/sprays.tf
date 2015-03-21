@@ -10,6 +10,23 @@ function handleFile(file) {
 		var selection = new Cropper(canvas, image, true);
 		selection.init(200, 200, 200, 200);
 	});
+	$('input').className = 'hidden';
+	$('edit').className = '';
+}
+
+function resizeImageToWidth(image, width, cb) {
+	var c = document.createElement("canvas");
+	var ctx = c.getContext("2d");
+	width = Math.min(width, image.width);
+	var height = width / image.width * image.height;
+	c.width = width;
+	c.height = height;
+	ctx.drawImage(image, 0, 0, width, height);
+	var img = new Image();
+	img.onload = function () {
+		cb(img);
+	};
+	img.src = c.toDataURL();
 }
 
 /**
@@ -19,18 +36,24 @@ function handleFile(file) {
  * @param cb
  */
 function fileToCanvas(canvas, file, cb) {
-	var ctx = canvas.getContext('2d');
 	var img = new Image();
 	img.onload = function () {
-		canvas.width = img.width;
-		canvas.height = img.height;
-		ctx.drawImage(img, 0, 0);
-		cb(img);
+		resizeImageToWidth(img, window.innerWidth, function (scaledImage) {
+			canvas.width = scaledImage.width;
+			canvas.height = scaledImage.height;
+
+			cb(scaledImage);
+		});
 	};
 	img.src = URL.createObjectURL(file);
 }
 
 domready(function () {
+	$('button-new').onclick = function () {
+		$('input').className = '';
+		$('edit').className = 'hidden';
+	};
+
 	var dropArea = $('droparea');
 	var handleDragOver = function (evt) {
 		evt.stopPropagation();
