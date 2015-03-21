@@ -1,5 +1,6 @@
 var domready = require('domready');
 var Cropper = require('./crop');
+var saver = require('./FileSaver');
 
 var selection = null;
 
@@ -32,19 +33,10 @@ function resizeImageToWidth(image, width, cb) {
 	img.src = c.toDataURL();
 }
 
-var saveData = (function () {
-	var a = document.createElement("a");
-	document.body.appendChild(a);
-	a.style = "display: none";
-	return function (data, fileName) {
-		var blob = new Blob([data], {type: "octet/stream"}),
-			url = window.URL.createObjectURL(blob);
-		a.href = url;
-		a.download = fileName;
-		a.click();
-		window.URL.revokeObjectURL(url);
-	};
-}());
+var saveData = function (data, fileName) {
+	var blob = new Blob([data], {type: "octet/stream"});
+	saver.saveAs(blob, fileName);
+};
 
 /**
  * get an emscripten pointer to the image data from the canvas
