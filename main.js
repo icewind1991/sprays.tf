@@ -14,7 +14,8 @@ function handleFile(file) {
 		$('edit').className = '';
 		$('button-save').disabled = null;
 		selection = new Cropper(canvas, image, true);
-		selection.init(200, 200, 256, 256);
+		var selectSize = Math.min(Math.min(256, image.width), Math.min(256, image.height));
+		selection.init(0, 0, selectSize, selectSize);
 	});
 }
 
