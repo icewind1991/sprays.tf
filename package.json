@@ -1,0 +1,13 @@
+{
+	"name": "sprays.tf",
+	"version": "0.0.1",
+	"description": "Make TF2 sprays in the browser",
+	"author": "Robin Appelman <robin@icewind.nl>",
+	"keywords": [
+		"spray",
+		"tf2"
+	],
+	"dependencies": {
+		"vtf": "*"
+	}
+}
