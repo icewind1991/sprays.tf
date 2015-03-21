@@ -11,18 +11,21 @@ Cropper.prototype.init = function (x, y, w, h) {
 	applyToCanvas(this.canvas, this.image, this.selection, this.keepAspect);
 };
 /**
- * Get the selected part of the image as a canvas
+ * Get the selected part of the image
  *
- * @returns {HTMLCanvasElement}
+ * @returns {CanvasPixelArray}
  */
 Cropper.prototype.getResults = function () {
-	var outputContext, outputCanvas;
-	outputCanvas = /** @type {!HTMLCanvasElement} */  document.createElement('canvas');
-	outputContext = outputCanvas.getContext('2d');
-	outputCanvas.width = this.selection.w;
-	outputCanvas.height = this.selection.h;
-	outputContext.drawImage(this.image, this.selection.x, this.selection.y, this.selection.w, this.selection.h, 0, 0, this.selection.w, this.selection.h);
-	return outputCanvas;
+	var ctx = this.canvas.getContext("2d");
+	return ctx.getImageData(this.selection.x, this.selection.y, this.selection.w, this.selection.h).data;
+};
+
+Cropper.prototype.getWidth = function () {
+	return this.selection.w;
+};
+
+Cropper.prototype.getHeight = function () {
+	return this.selection.h;
 };
 
 

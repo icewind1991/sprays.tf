@@ -1,5 +1,8 @@
 var domready = require('domready');
 var Cropper = require('./crop');
+var vtf = require('vtf');
+
+var selection = null;
 
 var $ = document.getElementById.bind(document);
 
@@ -7,11 +10,12 @@ function handleFile(file) {
 	console.log(file);
 	var canvas = $('image');
 	fileToCanvas(canvas, file, function (image) {
-		var selection = new Cropper(canvas, image, true);
-		selection.init(200, 200, 200, 200);
+		$('input').className = 'hidden';
+		$('edit').className = '';
+		$('button-save').disabled = null;
+		selection = new Cropper(canvas, image, true);
+		selection.init(200, 200, 256, 256);
 	});
-	$('input').className = 'hidden';
-	$('edit').className = '';
 }
 
 function resizeImageToWidth(image, width, cb) {
@@ -28,6 +32,46 @@ function resizeImageToWidth(image, width, cb) {
 	};
 	img.src = c.toDataURL();
 }
+
+var saveData = (function () {
+	var a = document.createElement("a");
+	document.body.appendChild(a);
+	a.style = "display: none";
+	return function (data, fileName) {
+		var blob = new Blob([data], {type: "octet/stream"}),
+			url = window.URL.createObjectURL(blob);
+		a.href = url;
+		a.download = fileName;
+		a.click();
+		window.URL.revokeObjectURL(url);
+	};
+}());
+
+/**
+ * get an emscripten pointer to the image data from the canvas
+ */
+function dataFromCanvas(canvas) {
+	var ctx = canvas.getContext("2d");
+	return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+}
+
+var resize = function resize(sourceRGBA, sourceWidth, sourceHeight, targetWidth, targetHeight) {
+	var sourceCanvas = document.createElement("canvas");
+	var sourceContext = sourceCanvas.getContext("2d");
+	sourceCanvas.width = sourceWidth;
+	sourceCanvas.height = sourceHeight;
+	var imgData = sourceContext.createImageData(sourceWidth, sourceHeight);
+	imgData.data.set(sourceRGBA);
+	sourceContext.putImageData(imgData, 0, 0);
+
+	var targetCanvas = document.createElement("canvas");
+	var targetContext = targetCanvas.getContext("2d");
+	targetCanvas.width = targetWidth;
+	targetCanvas.height = targetHeight;
+	targetContext.drawImage(sourceCanvas, 0, 0, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+
+	return targetContext.getImageData(0, 0, targetWidth, targetHeight).data;
+};
 
 /**
  *
@@ -48,10 +92,42 @@ function fileToCanvas(canvas, file, cb) {
 	img.src = URL.createObjectURL(file);
 }
 
+function getTargetWidth(width) {
+	if (width > 512) {
+		return 512;
+	}
+	// get closest power of 2
+	return Math.pow(2, Math.round(Math.log(width) / Math.log(2)));
+}
+
 domready(function () {
+	var saving = false;
 	$('button-new').onclick = function () {
 		$('input').className = '';
 		$('edit').className = 'hidden';
+		selection = null;
+		$('button-save').disabled = 'disabled';
+	};
+
+	$('button-save').onclick = function () {
+		if (!selection || saving) {
+			return;
+		}
+		saving = true;
+		$('button-save').disabled = 'disabled';
+		$('button-save').textContent = 'Working...';
+		setTimeout(function () {
+			var data = selection.getResults();
+			var targetSize = getTargetWidth(selection.getWidth());
+			if (selection.getWidth() != targetSize) {
+				data = resize(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
+			}
+			var targetData = vtf.fromRGBA(data, targetSize, targetSize);
+			saveData(targetData, 'spray.vtf');
+			saving = false;
+			$('button-save').textContent = 'Save';
+			$('button-save').disabled = null;
+		}, 1);
 	};
 
 	var dropArea = $('droparea');
