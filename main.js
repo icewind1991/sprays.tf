@@ -37,6 +37,7 @@ domready(function () {
 	$('button-new').onclick = function () {
 		$('input').className = '';
 		$('edit').className = 'hidden';
+		selection.clear();
 		selection = null;
 		$('button-save').disabled = 'disabled';
 	};

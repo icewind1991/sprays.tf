@@ -3,10 +3,34 @@ var Cropper = function (canvas, image, keepAspect) {
 	this.image = image;
 	this.selection = null;
 	this.keepAspect = keepAspect;
+	this.onMove = this.mouseMove.bind(this);
+	this.onDown = this.mouseDown.bind(this);
+	this.onOut = this.mouseOut.bind(this);
+	this.onUp = this.mouseUp.bind(this);
 };
 Cropper.prototype.init = function (x, y, w, h) {
 	this.selection = new Selection(x, y, w, h);
-	applyToCanvas(this.canvas, this.image, this.selection, this.keepAspect);
+	this.applyToCanvas();
+};
+Cropper.prototype.setImage = function (image) {
+	this.image = image;
+	var ctx = this.canvas.getContext('2d');
+	drawScene(ctx, this.selection, this.image);
+};
+Cropper.prototype.applyToCanvas = function () {
+	this.canvas.addEventListener('mousemove', this.onMove, false);
+
+	this.canvas.addEventListener('mousedown', this.onDown, false);
+
+	this.canvas.addEventListener('mouseout', this.onOut, false);
+
+	this.canvas.addEventListener('mouseup', this.onUp, false);
+};
+Cropper.prototype.clear = function(){
+	this.canvas.removeEventListener('mousemove', this.onMove);
+	this.canvas.removeEventListener('mousedown', this.onDown);
+	this.canvas.removeEventListener('mouseout', this.onOut);
+	this.canvas.removeEventListener('mouseup', this.onUp);
 };
 /**
  * Get the selected part of the image
@@ -91,194 +115,190 @@ function drawScene(ctx, theSelection, image) { // main drawScene function
 	theSelection.draw(ctx, image);
 }
 
-var applyToCanvas = function (canvas, image, selection, keepAspect) {
-	var theSelection = selection;
-	var ctx = canvas.getContext('2d');
+Cropper.prototype.mouseMove = function (e) {
+	var image = this.image;
+	var oldEndX, oldEndY;
+	var i, canvasOffset = getOffset(this.canvas);
+	var iMouseX = Math.floor(e.pageX - canvasOffset.left);
+	var iMouseY = Math.floor(e.pageY - canvasOffset.top);
 
-	canvas.addEventListener('mousemove', function (e) { // binding mouse move event
-		var oldEndX, oldEndY;
-		var i, canvasOffset = getOffset(canvas);
-		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
-		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
-
-		// in case of drag of whole selector
-		if (theSelection.bDragAll) {
-			var xStart = iMouseX - theSelection.px;
-			var xEnd = xStart + theSelection.w;
-			var yStart = iMouseY - theSelection.py;
-			var yEnd = yStart + theSelection.h;
-			if (xStart > 0) {
-				if (xEnd < image.width) {
-					theSelection.x = xStart;
-				} else {
-					theSelection.x = image.width - theSelection.w;
-				}
+	// in case of drag of whole selector
+	if (this.selection.bDragAll) {
+		var xStart = iMouseX - this.selection.px;
+		var xEnd = xStart + this.selection.w;
+		var yStart = iMouseY - this.selection.py;
+		var yEnd = yStart + this.selection.h;
+		if (xStart > 0) {
+			if (xEnd < image.width) {
+				this.selection.x = xStart;
 			} else {
-				theSelection.x = 0;
+				this.selection.x = image.width - this.selection.w;
 			}
-			if (yStart > 0) {
-				if (yEnd < image.height) {
-					theSelection.y = yStart;
-				} else {
-					theSelection.y = image.height - theSelection.w;
-				}
+		} else {
+			this.selection.x = 0;
+		}
+		if (yStart > 0) {
+			if (yEnd < image.height) {
+				this.selection.y = yStart;
 			} else {
-				theSelection.y = 0;
+				this.selection.y = image.height - this.selection.w;
 			}
+		} else {
+			this.selection.y = 0;
 		}
+	}
 
-		for (i = 0; i < 4; i++) {
-			theSelection.bHow[i] = false;
-			theSelection.iCSize[i] = theSelection.csize;
+	for (i = 0; i < 4; i++) {
+		this.selection.bHow[i] = false;
+		this.selection.iCSize[i] = this.selection.csize;
+	}
+
+	// hovering over resize cubes
+	if (iMouseX > this.selection.x - this.selection.csizeh && iMouseX < this.selection.x + this.selection.csizeh &&
+		iMouseY > this.selection.y - this.selection.csizeh && iMouseY < this.selection.y + this.selection.csizeh) {
+
+		this.selection.bHow[0] = true;
+		this.selection.iCSize[0] = this.selection.csizeh;
+	}
+	if (iMouseX > this.selection.x + this.selection.w - this.selection.csizeh && iMouseX < this.selection.x + this.selection.w + this.selection.csizeh &&
+		iMouseY > this.selection.y - this.selection.csizeh && iMouseY < this.selection.y + this.selection.csizeh) {
+
+		this.selection.bHow[1] = true;
+		this.selection.iCSize[1] = this.selection.csizeh;
+	}
+	if (iMouseX > this.selection.x + this.selection.w - this.selection.csizeh && iMouseX < this.selection.x + this.selection.w + this.selection.csizeh &&
+		iMouseY > this.selection.y + this.selection.h - this.selection.csizeh && iMouseY < this.selection.y + this.selection.h + this.selection.csizeh) {
+
+		this.selection.bHow[2] = true;
+		this.selection.iCSize[2] = this.selection.csizeh;
+	}
+	if (iMouseX > this.selection.x - this.selection.csizeh && iMouseX < this.selection.x + this.selection.csizeh &&
+		iMouseY > this.selection.y + this.selection.h - this.selection.csizeh && iMouseY < this.selection.y + this.selection.h + this.selection.csizeh) {
+
+		this.selection.bHow[3] = true;
+		this.selection.iCSize[3] = this.selection.csizeh;
+	}
+
+	// in case of dragging of resize cubes
+	var iFW, iFH, iFX, iFY;
+	if (this.selection.bDrag[0]) {
+		oldEndX = this.selection.x + this.selection.w;
+		oldEndY = this.selection.y + this.selection.h;
+		iFX = iMouseX - this.selection.px;
+		iFY = iMouseY - this.selection.py;
+		iFW = this.selection.w + this.selection.x - iFX;
+		iFH = this.selection.h + this.selection.y - iFY;
+		if (this.keepAspect) {
+			iFW = iFH = Math.round((iFW + iFH) / 2);
+			iFX = oldEndX - iFW;
+			iFY = oldEndY - iFH;
 		}
-
-		// hovering over resize cubes
-		if (iMouseX > theSelection.x - theSelection.csizeh && iMouseX < theSelection.x + theSelection.csizeh &&
-			iMouseY > theSelection.y - theSelection.csizeh && iMouseY < theSelection.y + theSelection.csizeh) {
-
-			theSelection.bHow[0] = true;
-			theSelection.iCSize[0] = theSelection.csizeh;
+	}
+	if (this.selection.bDrag[1]) {
+		oldEndY = this.selection.y + this.selection.h;
+		iFX = this.selection.x;
+		iFY = iMouseY - this.selection.py;
+		iFW = iMouseX - this.selection.px - iFX;
+		iFH = this.selection.h + this.selection.y - iFY;
+		if (this.keepAspect) {
+			iFW = iFH = Math.round((iFW + iFH) / 2);
+			iFY = oldEndY - iFH;
 		}
-		if (iMouseX > theSelection.x + theSelection.w - theSelection.csizeh && iMouseX < theSelection.x + theSelection.w + theSelection.csizeh &&
-			iMouseY > theSelection.y - theSelection.csizeh && iMouseY < theSelection.y + theSelection.csizeh) {
-
-			theSelection.bHow[1] = true;
-			theSelection.iCSize[1] = theSelection.csizeh;
+	}
+	if (this.selection.bDrag[2]) {
+		iFX = this.selection.x;
+		iFY = this.selection.y;
+		iFW = iMouseX - this.selection.px - iFX;
+		iFH = iMouseY - this.selection.py - iFY;
+		if (this.keepAspect) {
+			iFW = iFH = Math.round((iFW + iFH) / 2);
 		}
-		if (iMouseX > theSelection.x + theSelection.w - theSelection.csizeh && iMouseX < theSelection.x + theSelection.w + theSelection.csizeh &&
-			iMouseY > theSelection.y + theSelection.h - theSelection.csizeh && iMouseY < theSelection.y + theSelection.h + theSelection.csizeh) {
-
-			theSelection.bHow[2] = true;
-			theSelection.iCSize[2] = theSelection.csizeh;
+	}
+	if (this.selection.bDrag[3]) {
+		oldEndX = this.selection.x + this.selection.w;
+		iFX = iMouseX - this.selection.px;
+		iFY = this.selection.y;
+		iFW = this.selection.w + this.selection.x - iFX;
+		iFH = iMouseY - this.selection.py - iFY;
+		if (this.keepAspect) {
+			iFW = iFH = Math.round((iFW + iFH) / 2);
+			iFX = oldEndX - iFW;
 		}
-		if (iMouseX > theSelection.x - theSelection.csizeh && iMouseX < theSelection.x + theSelection.csizeh &&
-			iMouseY > theSelection.y + theSelection.h - theSelection.csizeh && iMouseY < theSelection.y + theSelection.h + theSelection.csizeh) {
+	}
 
-			theSelection.bHow[3] = true;
-			theSelection.iCSize[3] = theSelection.csizeh;
+	if (
+		iFW > this.selection.csizeh * 2 && iFH > this.selection.csizeh * 2 &&
+		iFX > 0 && iFY > 0 && (iFH + iFY) < image.height && (iFW + iFX) < image.width
+	) {
+		this.selection.w = iFW;
+		this.selection.h = iFH;
+
+		this.selection.x = iFX;
+		this.selection.y = iFY;
+	}
+
+	var ctx = this.canvas.getContext('2d');
+	drawScene(ctx, this.selection, this.image);
+};
+
+Cropper.prototype.mouseDown = function (e) {
+	var i, canvasOffset = getOffset(this.canvas);
+	var iMouseX = Math.floor(e.pageX - canvasOffset.left);
+	var iMouseY = Math.floor(e.pageY - canvasOffset.top);
+
+	this.selection.px = iMouseX - this.selection.x;
+	this.selection.py = iMouseY - this.selection.y;
+
+	if (this.selection.bHow[0]) {
+		this.selection.px = iMouseX - this.selection.x;
+		this.selection.py = iMouseY - this.selection.y;
+	}
+	if (this.selection.bHow[1]) {
+		this.selection.px = iMouseX - this.selection.x - this.selection.w;
+		this.selection.py = iMouseY - this.selection.y;
+	}
+	if (this.selection.bHow[2]) {
+		this.selection.px = iMouseX - this.selection.x - this.selection.w;
+		this.selection.py = iMouseY - this.selection.y - this.selection.h;
+	}
+	if (this.selection.bHow[3]) {
+		this.selection.px = iMouseX - this.selection.x;
+		this.selection.py = iMouseY - this.selection.y - this.selection.h;
+	}
+
+
+	if (iMouseX > this.selection.x + this.selection.csizeh && iMouseX < this.selection.x + this.selection.w - this.selection.csizeh &&
+		iMouseY > this.selection.y + this.selection.csizeh && iMouseY < this.selection.y + this.selection.h - this.selection.csizeh) {
+
+		this.selection.bDragAll = true;
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (this.selection.bHow[i]) {
+			this.selection.bDrag[i] = true;
 		}
+	}
+};
 
-		// in case of dragging of resize cubes
-		var iFW, iFH, iFX, iFY;
-		if (theSelection.bDrag[0]) {
-			oldEndX = theSelection.x + theSelection.w;
-			oldEndY = theSelection.y + theSelection.h;
-			iFX = iMouseX - theSelection.px;
-			iFY = iMouseY - theSelection.py;
-			iFW = theSelection.w + theSelection.x - iFX;
-			iFH = theSelection.h + theSelection.y - iFY;
-			if (keepAspect) {
-				iFW = iFH = Math.round((iFW + iFH) / 2);
-				iFX = oldEndX - iFW;
-				iFY = oldEndY - iFH;
-			}
-		}
-		if (theSelection.bDrag[1]) {
-			oldEndY = theSelection.y + theSelection.h;
-			iFX = theSelection.x;
-			iFY = iMouseY - theSelection.py;
-			iFW = iMouseX - theSelection.px - iFX;
-			iFH = theSelection.h + theSelection.y - iFY;
-			if (keepAspect) {
-				iFW = iFH = Math.round((iFW + iFH) / 2);
-				iFY = oldEndY - iFH;
-			}
-		}
-		if (theSelection.bDrag[2]) {
-			iFX = theSelection.x;
-			iFY = theSelection.y;
-			iFW = iMouseX - theSelection.px - iFX;
-			iFH = iMouseY - theSelection.py - iFY;
-			if (keepAspect) {
-				iFW = iFH = Math.round((iFW + iFH) / 2);
-			}
-		}
-		if (theSelection.bDrag[3]) {
-			oldEndX = theSelection.x + theSelection.w;
-			iFX = iMouseX - theSelection.px;
-			iFY = theSelection.y;
-			iFW = theSelection.w + theSelection.x - iFX;
-			iFH = iMouseY - theSelection.py - iFY;
-			if (keepAspect) {
-				iFW = iFH = Math.round((iFW + iFH) / 2);
-				iFX = oldEndX - iFW;
-			}
-		}
+Cropper.prototype.mouseOut = function (e) {
+	var image = this.image;
+	var canvasOffset = getOffset(this.canvas);
+	var iMouseX = Math.floor(e.pageX - canvasOffset.left);
+	var iMouseY = Math.floor(e.pageY - canvasOffset.top);
+	if (iMouseX < 0 || iMouseX > image.width || iMouseY < 0 || iMouseY > image.height) {
+		var event = new Event('mouseup');
+		this.canvas.dispatchEvent(event);
+	}
+};
 
-		if (
-			iFW > theSelection.csizeh * 2 && iFH > theSelection.csizeh * 2 &&
-			iFX > 0 && iFY > 0 && (iFH + iFY) < image.height && (iFW + iFX) < image.width
-		) {
-			theSelection.w = iFW;
-			theSelection.h = iFH;
+Cropper.prototype.mouseUp = function () { // binding mouseup event
+	this.selection.bDragAll = false;
 
-			theSelection.x = iFX;
-			theSelection.y = iFY;
-		}
-
-		drawScene(ctx, theSelection, image);
-	}, false);
-
-	canvas.addEventListener('mousedown', function (e) { // binding mousedown event
-		var i, canvasOffset = getOffset(canvas);
-		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
-		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
-
-		theSelection.px = iMouseX - theSelection.x;
-		theSelection.py = iMouseY - theSelection.y;
-
-		if (theSelection.bHow[0]) {
-			theSelection.px = iMouseX - theSelection.x;
-			theSelection.py = iMouseY - theSelection.y;
-		}
-		if (theSelection.bHow[1]) {
-			theSelection.px = iMouseX - theSelection.x - theSelection.w;
-			theSelection.py = iMouseY - theSelection.y;
-		}
-		if (theSelection.bHow[2]) {
-			theSelection.px = iMouseX - theSelection.x - theSelection.w;
-			theSelection.py = iMouseY - theSelection.y - theSelection.h;
-		}
-		if (theSelection.bHow[3]) {
-			theSelection.px = iMouseX - theSelection.x;
-			theSelection.py = iMouseY - theSelection.y - theSelection.h;
-		}
-
-
-		if (iMouseX > theSelection.x + theSelection.csizeh && iMouseX < theSelection.x + theSelection.w - theSelection.csizeh &&
-			iMouseY > theSelection.y + theSelection.csizeh && iMouseY < theSelection.y + theSelection.h - theSelection.csizeh) {
-
-			theSelection.bDragAll = true;
-		}
-
-		for (i = 0; i < 4; i++) {
-			if (theSelection.bHow[i]) {
-				theSelection.bDrag[i] = true;
-			}
-		}
-	}, false);
-
-	canvas.addEventListener('mouseout', function (e) {
-		var canvasOffset = getOffset(canvas);
-		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
-		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
-		if (iMouseX < 0 || iMouseX > image.width || iMouseY < 0 || iMouseY > image.height) {
-			var event = new Event('mouseup');
-			canvas.dispatchEvent(event);
-		}
-	});
-
-	canvas.addEventListener('mouseup', function () { // binding mouseup event
-		theSelection.bDragAll = false;
-
-		for (var i = 0; i < 4; i++) {
-			theSelection.bDrag[i] = false;
-		}
-		theSelection.px = 0;
-		theSelection.py = 0;
-	}, false);
-
-	drawScene(ctx, theSelection, image);
+	for (var i = 0; i < 4; i++) {
+		this.selection.bDrag[i] = false;
+	}
+	this.selection.px = 0;
+	this.selection.py = 0;
 };
 
 module.exports = Cropper;
