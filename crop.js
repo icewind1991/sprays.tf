@@ -87,15 +87,35 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 	var ctx = canvas.getContext('2d');
 
 	canvas.addEventListener('mousemove', function (e) { // binding mouse move event
-		var newFW, newFH;
+		var oldEndX, oldEndY;
 		var i, canvasOffset = $(canvas).offset();
 		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
 		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
 
 		// in case of drag of whole selector
 		if (theSelection.bDragAll) {
-			theSelection.x = iMouseX - theSelection.px;
-			theSelection.y = iMouseY - theSelection.py;
+			var xStart = iMouseX - theSelection.px;
+			var xEnd = xStart + theSelection.w;
+			var yStart = iMouseY - theSelection.py;
+			var yEnd = yStart + theSelection.h;
+			if (xStart > 0) {
+				if (xEnd < image.width) {
+					theSelection.x = xStart;
+				} else {
+					theSelection.x = image.width - theSelection.w;
+				}
+			} else {
+				theSelection.x = 0;
+			}
+			if (yStart > 0) {
+				if (yEnd < image.height) {
+					theSelection.y = yStart;
+				} else {
+					theSelection.y = image.height - theSelection.w;
+				}
+			} else {
+				theSelection.y = 0;
+			}
 		}
 
 		for (i = 0; i < 4; i++) {
@@ -132,8 +152,8 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 		// in case of dragging of resize cubes
 		var iFW, iFH, iFX, iFY;
 		if (theSelection.bDrag[0]) {
-			var oldEndX = theSelection.x + theSelection.w;
-			var oldEndY = theSelection.y + theSelection.h;
+			oldEndX = theSelection.x + theSelection.w;
+			oldEndY = theSelection.y + theSelection.h;
 			iFX = iMouseX - theSelection.px;
 			iFY = iMouseY - theSelection.py;
 			iFW = theSelection.w + theSelection.x - iFX;
@@ -145,7 +165,7 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 			}
 		}
 		if (theSelection.bDrag[1]) {
-			var oldEndY = theSelection.y + theSelection.h;
+			oldEndY = theSelection.y + theSelection.h;
 			iFX = theSelection.x;
 			iFY = iMouseY - theSelection.py;
 			iFW = iMouseX - theSelection.px - iFX;
@@ -165,7 +185,7 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 			}
 		}
 		if (theSelection.bDrag[3]) {
-			var oldEndX = theSelection.x + theSelection.w;
+			oldEndX = theSelection.x + theSelection.w;
 			iFX = iMouseX - theSelection.px;
 			iFY = theSelection.y;
 			iFW = theSelection.w + theSelection.x - iFX;
@@ -176,7 +196,10 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 			}
 		}
 
-		if (iFW > theSelection.csizeh * 2 && iFH > theSelection.csizeh * 2) {
+		if (
+			iFW > theSelection.csizeh * 2 && iFH > theSelection.csizeh * 2 &&
+			iFX > 0 && iFY > 0 && (iFH + iFY) < image.height && (iFW + iFX) < image.width
+		) {
 			theSelection.w = iFW;
 			theSelection.h = iFH;
 
@@ -226,7 +249,17 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 		}
 	}, false);
 
-	canvas.addEventListener('mouseup', function (e) { // binding mouseup event
+	canvas.addEventListener('mouseout', function (e) {
+		var canvasOffset = $(canvas).offset();
+		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
+		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
+		if (iMouseX < 0 || iMouseX > image.width || iMouseY < 0 || iMouseY > image.height) {
+			var event = new Event('mouseup');
+			canvas.dispatchEvent(event);
+		}
+	});
+
+	canvas.addEventListener('mouseup', function () { // binding mouseup event
 		theSelection.bDragAll = false;
 
 		for (var i = 0; i < 4; i++) {
