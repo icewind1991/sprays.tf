@@ -15,7 +15,10 @@ Cropper.prototype.init = function (x, y, w, h) {
  */
 Cropper.prototype.getResults = function () {
 	var ctx = this.canvas.getContext("2d");
-	return ctx.getImageData(this.selection.x, this.selection.y, this.selection.w, this.selection.h).data;
+	ctx.drawImage(this.image, 0, 0, ctx.canvas.width, ctx.canvas.height); //redraw the original image
+	var data = ctx.getImageData(this.selection.x, this.selection.y, this.selection.w, this.selection.h).data;
+	drawScene(ctx, this.selection, this.image);
+	return data;
 };
 
 Cropper.prototype.getWidth = function () {
