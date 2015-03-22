@@ -9,7 +9,6 @@
 	],
 	"dependencies": {
 		"vtf": "*",
-		"domready": "*",
-		"jquery": "*"
+		"domready": "*"
 	}
 }

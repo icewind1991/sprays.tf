@@ -1,5 +1,3 @@
-var $ = require('jquery');
-
 var Cropper = function (canvas, image, keepAspect) {
 	this.canvas = canvas;
 	this.image = image;
@@ -28,6 +26,14 @@ Cropper.prototype.getHeight = function () {
 	return this.selection.h;
 };
 
+function getOffset(element) {
+	var box = element.getBoundingClientRect();
+	var offset = {
+		top : box.top + window.pageYOffset - document.documentElement.clientTop,
+		left: box.left + window.pageXOffset - document.documentElement.clientLeft
+	};
+	return offset;
+}
 
 // define Selection constructor
 function Selection(x, y, w, h) {
@@ -88,7 +94,7 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 
 	canvas.addEventListener('mousemove', function (e) { // binding mouse move event
 		var oldEndX, oldEndY;
-		var i, canvasOffset = $(canvas).offset();
+		var i, canvasOffset = getOffset(canvas);
 		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
 		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
 
@@ -211,7 +217,7 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 	}, false);
 
 	canvas.addEventListener('mousedown', function (e) { // binding mousedown event
-		var i, canvasOffset = $(canvas).offset();
+		var i, canvasOffset = getOffset(canvas);
 		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
 		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
 
@@ -250,7 +256,7 @@ var applyToCanvas = function (canvas, image, selection, keepAspect) {
 	}, false);
 
 	canvas.addEventListener('mouseout', function (e) {
-		var canvasOffset = $(canvas).offset();
+		var canvasOffset = getOffset(canvas);
 		var iMouseX = Math.floor(e.pageX - canvasOffset.left);
 		var iMouseY = Math.floor(e.pageY - canvasOffset.top);
 		if (iMouseX < 0 || iMouseX > image.width || iMouseY < 0 || iMouseY > image.height) {

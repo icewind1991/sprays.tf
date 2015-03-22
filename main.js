@@ -1,6 +1,7 @@
 var domready = require('domready');
 var Cropper = require('./crop');
 var saver = require('./FileSaver');
+var imageUtil = require('./imageutil');
 
 var selection = null;
 
@@ -8,7 +9,7 @@ var $ = document.getElementById.bind(document);
 
 function handleFile(file) {
 	var canvas = $('image');
-	fileToCanvas(canvas, file, function (image) {
+	imageUtil.fileToCanvas(canvas, file, function (image) {
 		$('input').className = 'hidden';
 		$('edit').className = '';
 		$('button-save').disabled = null;
@@ -18,70 +19,10 @@ function handleFile(file) {
 	});
 }
 
-function resizeImageToWidth(image, width, cb) {
-	var c = document.createElement("canvas");
-	var ctx = c.getContext("2d");
-	width = Math.min(width, image.width);
-	var height = width / image.width * image.height;
-	c.width = width;
-	c.height = height;
-	ctx.drawImage(image, 0, 0, width, height);
-	var img = new Image();
-	img.onload = function () {
-		cb(img);
-	};
-	img.src = c.toDataURL();
-}
-
 var saveData = function (data, fileName) {
 	var blob = new Blob([data], {type: "octet/stream"});
 	saver.saveAs(blob, fileName);
 };
-
-/**
- * get an emscripten pointer to the image data from the canvas
- */
-function dataFromCanvas(canvas) {
-	var ctx = canvas.getContext("2d");
-	return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-}
-
-var resize = function resize(sourceRGBA, sourceWidth, sourceHeight, targetWidth, targetHeight) {
-	var sourceCanvas = document.createElement("canvas");
-	var sourceContext = sourceCanvas.getContext("2d");
-	sourceCanvas.width = sourceWidth;
-	sourceCanvas.height = sourceHeight;
-	var imgData = sourceContext.createImageData(sourceWidth, sourceHeight);
-	imgData.data.set(sourceRGBA);
-	sourceContext.putImageData(imgData, 0, 0);
-
-	var targetCanvas = document.createElement("canvas");
-	var targetContext = targetCanvas.getContext("2d");
-	targetCanvas.width = targetWidth;
-	targetCanvas.height = targetHeight;
-	targetContext.drawImage(sourceCanvas, 0, 0, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
-
-	return targetContext.getImageData(0, 0, targetWidth, targetHeight).data;
-};
-
-/**
- *
- * @param {HTMLCanvasElement} canvas
- * @param file
- * @param cb
- */
-function fileToCanvas(canvas, file, cb) {
-	var img = new Image();
-	img.onload = function () {
-		resizeImageToWidth(img, window.innerWidth, function (scaledImage) {
-			canvas.width = scaledImage.width;
-			canvas.height = scaledImage.height;
-
-			cb(scaledImage);
-		});
-	};
-	img.src = URL.createObjectURL(file);
-}
 
 function getTargetWidth(width) {
 	if (width > 512) {
@@ -111,7 +52,7 @@ domready(function () {
 		var data = selection.getResults();
 		var targetSize = getTargetWidth(selection.getWidth());
 		if (selection.getWidth() != targetSize) {
-			data = resize(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
+			data = imageUtil.resizeRGBA(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
 		}
 		var worker = new Worker("worker-bundle.js");
 		worker.onmessage = function (e) {
