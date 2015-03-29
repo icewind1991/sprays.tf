@@ -1,6 +1,6 @@
 var domready = require('domready');
 var Cropper = require('./crop');
-var saver = require('./FileSaver');
+var saveAs = require('browser-filesaver');
 var imageUtil = require('./imageutil');
 
 var selection = null;
@@ -21,7 +21,7 @@ function handleFile(file) {
 
 var saveData = function (data, fileName) {
 	var blob = new Blob([data], {type: "octet/stream"});
-	saver.saveAs(blob, fileName);
+	saveAs(blob, fileName);
 };
 
 function getTargetWidth(width) {
@@ -37,7 +37,9 @@ domready(function () {
 	$('button-new').onclick = function () {
 		$('input').className = '';
 		$('edit').className = 'hidden';
-		selection.clear();
+		if (selection) {
+			selection.clear();
+		}
 		selection = null;
 		$('button-save').disabled = 'disabled';
 	};
