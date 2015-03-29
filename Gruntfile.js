@@ -29,6 +29,10 @@ module.exports = function (grunt) {
 			less  : {
 				files: ['style/*'],
 				tasks: ['less', 'asset_cachebuster']
+			},
+			html: {
+				files: ['main.html'],
+				tasks: ['asset_cachebuster']
 			}
 		},
 		less             : {

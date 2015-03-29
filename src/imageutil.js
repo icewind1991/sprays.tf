@@ -1,3 +1,5 @@
+var Bluebird = require('bluebird');
+
 var resizeImageToWidth = function (image, width, cb) {
 	var c = document.createElement("canvas");
 	var ctx = c.getContext("2d");
@@ -16,20 +18,25 @@ var resizeImageToWidth = function (image, width, cb) {
 /**
  *
  * @param {HTMLCanvasElement} canvas
- * @param file
- * @param cb
+ * @param {string} url
  */
-exports.fileToCanvas = function (canvas, file, cb) {
-	var img = new Image();
-	img.onload = function () {
-		resizeImageToWidth(img, window.innerWidth, function (scaledImage) {
-			canvas.width = scaledImage.width;
-			canvas.height = scaledImage.height;
+exports.urlToCanvas = function (canvas, url) {
+	return new Bluebird(function (resolve, reject) {
+		var img = new Image();
+		img.crossOrigin = "Anonymous";
+		img.onload = function () {
+			resizeImageToWidth(img, window.innerWidth, function (scaledImage) {
+				canvas.width = scaledImage.width;
+				canvas.height = scaledImage.height;
 
-			cb(scaledImage);
-		});
-	};
-	img.src = URL.createObjectURL(file);
+				resolve(scaledImage);
+			});
+		};
+		img.onerror = function () {
+			reject('Failed loading image');
+		};
+		img.src = url;
+	});
 };
 
 exports.canvasToImage = function (canvas, cb) {

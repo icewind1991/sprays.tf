@@ -1,3 +1,4 @@
+var Bluebird = require('bluebird');
 var domready = require('domready');
 var Cropper = require('./crop');
 var saveAs = require('browser-filesaver');
@@ -8,16 +9,33 @@ var selection = null;
 var $ = document.getElementById.bind(document);
 
 function handleFile(file) {
-	var canvas = $('image');
-	imageUtil.fileToCanvas(canvas, file, function (image) {
-		$('input').className = 'hidden';
-		$('edit').className = '';
-		$('button-save').disabled = null;
-		selection = new Cropper(canvas, image, true);
-		var selectSize = Math.min(Math.min(256, image.width), Math.min(256, image.height));
-		selection.init(0, 0, selectSize, selectSize);
-	});
+	return handleUrl(URL.createObjectURL(file));
 }
+
+function handleUrl(url) {
+	if (handleUrl.loading) {
+		return Bluebird.reject();
+	}
+	handleUrl.loading = true;
+	var canvas = $('image');
+	return imageUtil.urlToCanvas(canvas, url)
+		.then(function (image) {
+			selection = new Cropper(canvas, image, true);
+			var selectSize = Math.min(Math.min(256, image.width), Math.min(256, image.height));
+			selection.init(0, 0, selectSize, selectSize);
+			handleUrl.loading = false;
+			setTimeout(function () {
+				$('input').className = 'hidden';
+				$('edit').className = '';
+				$('button-save').disabled = null;
+			}, 1);
+		})
+		.finally(function () {
+			handleUrl.loading = false;
+		});
+}
+
+handleUrl.loading = false;
 
 var saveData = function (data, fileName) {
 	var blob = new Blob([data], {type: "octet/stream"});
@@ -41,8 +59,10 @@ domready(function () {
 			selection.clear();
 		}
 		selection = null;
+		$('file-link').value = '';
 		$('button-save').disabled = 'disabled';
 	};
+
 
 	$('button-save').onclick = function () {
 		if (!selection || saving) {
@@ -67,6 +87,32 @@ domready(function () {
 		};
 		worker.postMessage({data: data, size: targetSize});
 	};
+	$('file-link').addEventListener('input', function () {
+		this.classList.remove('error');
+	}, false);
+	$('input-text').addEventListener('submit', function (e) {
+		var input = $('file-link');
+		e.preventDefault();
+		var link = input.value;
+		input.classList.add('loading');
+		handleUrl('https://cors-anywhere.herokuapp.com/' + link).catch(function () {
+			input.classList.add('error');
+		}).finally(function () {
+			input.classList.remove('loading');
+		});
+	}, false);
+
+	window.addEventListener('paste', function (e) {
+		var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].type === 'text/plain') {
+				items[i].getAsString(handleUrl);
+			} else if (items[i].type.substr(0, 6) === 'image/') {
+				var file = items[i].getAsFile();
+				handleFile(file);
+			}
+		}
+	}, false);
 
 	var dropArea = $('droparea');
 	var handleDragOver = function (evt) {

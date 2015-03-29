@@ -5,7 +5,7 @@
 		<title>sprays.tf</title>
 		<link rel="stylesheet" href="build/style.css" />
 	</head>
-	<body>
+	<body id="body">
 		<header class="home-menu pure-menu pure-menu-open pure-menu-horizontal pure-menu-fixed">
 			<span class="pure-menu-heading active">sprays.tf</span>
 			<ul>
@@ -17,14 +17,16 @@
 				</li>
 			</ul>
 		</header>
-		<form id="input" enctype="multipart/form-data">
+		<div id="input" enctype="multipart/form-data">
 			<div id="droparea">
 				Drop image or click to start
 			</div>
 			<input type="file" name="demo" id="file">
 
-			<p class="demo-info"><span id="upload-map"></span><span id="upload-time" class="time"></span></p>
-		</form>
+			<form id="input-text">
+				<input id="file-link" type="text" placeholder="Or paste a link" />
+			</form>
+		</div>
 		<div id="edit" class="hidden">
 			<canvas id="image"></canvas>
 		</div>

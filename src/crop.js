@@ -24,7 +24,10 @@ Cropper.prototype.applyToCanvas = function () {
 
 	this.canvas.addEventListener('mouseout', this.onOut, false);
 
+	var ctx = this.canvas.getContext("2d");
 	this.canvas.addEventListener('mouseup', this.onUp, false);
+
+	drawScene(ctx, this.selection, this.image);
 };
 Cropper.prototype.clear = function(){
 	this.canvas.removeEventListener('mousemove', this.onMove);
@@ -55,11 +58,10 @@ Cropper.prototype.getHeight = function () {
 
 function getOffset(element) {
 	var box = element.getBoundingClientRect();
-	var offset = {
+	return {
 		top : box.top + window.pageYOffset - document.documentElement.clientTop,
 		left: box.left + window.pageXOffset - document.documentElement.clientLeft
 	};
-	return offset;
 }
 
 // define Selection constructor
