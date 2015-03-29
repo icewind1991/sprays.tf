@@ -1,10 +1,10 @@
 module.exports = function (grunt) {
 	grunt.initConfig({
-		pkg     : grunt.file.readJSON('package.json'),
-		jshint  : {
+		pkg              : grunt.file.readJSON('package.json'),
+		jshint           : {
 			all: ['Gruntfile.js', 'src/*.js']
 		},
-		watchify: {
+		watchify         : {
 			options: {
 				debug: (grunt.option('target') === 'dev')
 			},
@@ -17,21 +17,21 @@ module.exports = function (grunt) {
 				dest: 'build/worker-bundle.js'
 			}
 		},
-		watch   : {
+		watch            : {
 			main  : {
 				files: ['src/*.js', '!src/worker.js'],
-				tasks: ['jshint', 'watchify:main']
+				tasks: ['jshint', 'watchify:main', 'asset_cachebuster']
 			},
 			worker: {
 				files: ['src/worker.js'],
-				tasks: ['jshint', 'watchify:worker']
+				tasks: ['jshint', 'watchify:worker', 'asset_cachebuster']
 			},
 			less  : {
 				files: ['style/*'],
-				tasks: ['less']
+				tasks: ['less', 'asset_cachebuster']
 			}
 		},
-		less    : {
+		less             : {
 			main: {
 				options: {
 					paths    : ["style"],
@@ -41,16 +41,27 @@ module.exports = function (grunt) {
 					"build/style.css": "style/style.less"
 				}
 			}
+		},
+		asset_cachebuster: {
+			options: {
+				buster: Date.now()
+			},
+			build  : {
+				files: {
+					'index.html': ['main.html']
+				}
+			}
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-less');
+	grunt.loadNpmTasks('grunt-asset-cachebuster');
 	grunt.loadNpmTasks('grunt-watchify');
 
 	// Default task(s).
-	grunt.registerTask('default', ['jshint', 'watchify', 'less']);
+	grunt.registerTask('default', ['jshint', 'watchify', 'less', 'asset_cachebuster']);
 	grunt.registerTask('dev', function () {
 		grunt.option('target', 'dev');
 		grunt.task.run(['watch']);
