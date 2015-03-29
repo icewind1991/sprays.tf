@@ -6,7 +6,7 @@ module.exports = function (grunt) {
 		},
 		watchify: {
 			options: {
-				debug: true
+				debug: (grunt.option('target') === 'dev')
 			},
 			main   : {
 				src : ['./src/main.js'],
@@ -18,22 +18,41 @@ module.exports = function (grunt) {
 			}
 		},
 		watch   : {
-			main: {
+			main  : {
 				files: ['src/*.js', '!src/worker.js'],
 				tasks: ['jshint', 'watchify:main']
 			},
 			worker: {
 				files: ['src/worker.js'],
 				tasks: ['jshint', 'watchify:worker']
+			},
+			less  : {
+				files: ['style/*'],
+				tasks: ['less']
+			}
+		},
+		less    : {
+			main: {
+				options: {
+					paths    : ["style"],
+					sourceMap: (grunt.option('target') === 'dev')
+				},
+				files  : {
+					"build/style.css": "style/style.less"
+				}
 			}
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-contrib-less');
 	grunt.loadNpmTasks('grunt-watchify');
 
 	// Default task(s).
-	grunt.registerTask('default', ['jshint', 'watchify']);
-	//grunt.registerTask('watch', ['watch']);
+	grunt.registerTask('default', ['jshint', 'watchify', 'less']);
+	grunt.registerTask('dev', function () {
+		grunt.option('target', 'dev');
+		grunt.task.run(['watch']);
+	});
 };
