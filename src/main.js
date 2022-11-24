@@ -1,7 +1,7 @@
 var Bluebird = require('bluebird');
 var domready = require('domready');
 var Cropper = require('./crop');
-var filesaver = require('browser-filesaver');
+var saveAs = require('browser-filesaver');
 var imageUtil = require('./imageutil');
 
 var selection = null;
@@ -39,7 +39,7 @@ handleUrl.loading = false;
 
 var saveData = function (data, fileName) {
 	var blob = new Blob([data], {type: "octet/stream"});
-	filesaver.saveAs(blob, fileName);
+	saveAs(blob, fileName);
 };
 
 function getTargetWidth(width) {
@@ -74,10 +74,10 @@ domready(function () {
 		saveButton.textContent = 'Working...';
 		var data = selection.getResults();
 		var targetSize = getTargetWidth(selection.getWidth());
-		if (selection.getWidth() !== targetSize) {
+		if (selection.getWidth() != targetSize) {
 			data = imageUtil.resizeRGBA(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
 		}
-		var worker = new Worker("/build/worker-bundle.js");
+		var worker = new Worker("worker-bundle.js");
 		worker.onmessage = function (e) {
 			var targetData = e.data;
 			saveData(targetData, 'spray.vtf');
@@ -103,6 +103,7 @@ domready(function () {
 	}, false);
 
 	window.addEventListener('paste', function (e) {
+		console.log(e);
 		var items = (event.clipboardData || event.originalEvent.clipboardData).items;
 		for (var i = 0; i < items.length; i++) {
 			if (items[i].type === 'text/plain') {

@@ -10,4 +10,9 @@ watch: node_modules
 build: node_modules
 	node_modules/.bin/grunt
 
+.PHONY: deploy
+deploy: build
+	scp -r build robin@icewind.nl:/var/www/html/sprays.tf
+	scp index.html robin@icewind.nl:/var/www/html/sprays.tf
+
 all: build
