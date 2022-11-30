@@ -65,7 +65,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-watchify');
 
 	// Default task(s).
-	grunt.registerTask('default', ['jshint', 'watchify', 'less', 'asset_cachebuster']);
+	grunt.registerTask('default', ['watchify', 'less', 'asset_cachebuster']);
 	grunt.registerTask('dev', function () {
 		grunt.option('target', 'dev');
 		grunt.task.run(['watch']);

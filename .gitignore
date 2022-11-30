@@ -2,3 +2,5 @@
 node_modules
 build/*
 index.html
+result
+.direnv

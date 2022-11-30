@@ -8,17 +8,19 @@
 		"tf2"
 	],
 	"dependencies": {
-		"vtf": "*",
-		"domready": "*",
-		"browser-filesaver": "*",
-		"bluebird": "*"
+		"vtf": "^0.0.3",
+		"domready": "^1.0.8",
+		"browser-filesaver": "^1.1.1",
+		"bluebird": "^3.7.2",
+		"pica": "1.1.1"
 	},
 	"devDependencies": {
-		"grunt": "~0.4.5",
-		"grunt-asset-cachebuster": "^0.3.1",
-		"grunt-contrib-jshint": "~0.10.0",
-		"grunt-contrib-less": "^1.0.0",
-		"grunt-contrib-watch": "^0.6.1",
+		"grunt-cli": "^1.4.3",
+		"grunt": "^1.5.3",
+		"grunt-asset-cachebuster": "^0.5.0",
+		"grunt-contrib-jshint": "^3.2.0",
+		"grunt-contrib-less": "^3.0.0",
+		"grunt-contrib-watch": "^1.1.0",
 		"grunt-watchify": "^0.1.0"
 	}
 }
