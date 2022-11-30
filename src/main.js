@@ -1,7 +1,7 @@
 var Bluebird = require('bluebird');
 var domready = require('domready');
 var Cropper = require('./crop');
-var saveAs = require('browser-filesaver');
+var FileSaver = require('browser-filesaver');
 var imageUtil = require('./imageutil');
 
 var selection = null;
@@ -39,7 +39,7 @@ handleUrl.loading = false;
 
 var saveData = function (data, fileName) {
 	var blob = new Blob([data], {type: "octet/stream"});
-	saveAs(blob, fileName);
+	FileSaver.saveAs(blob, fileName);
 };
 
 function getTargetWidth(width) {
@@ -77,7 +77,7 @@ domready(function () {
 		if (selection.getWidth() != targetSize) {
 			data = imageUtil.resizeRGBA(data, selection.getWidth(), selection.getHeight(), targetSize, targetSize);
 		}
-		var worker = new Worker("worker-bundle.js");
+		var worker = new Worker("build/worker-bundle.js");
 		worker.onmessage = function (e) {
 			var targetData = e.data;
 			saveData(targetData, 'spray.vtf');
