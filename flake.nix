@@ -14,6 +14,7 @@
         inherit system;
       };
       nodeDependencies = (pkgs.callPackage ./default.nix { nodejs = pkgs.nodejs_20; }).nodeDependencies;
+      lib = pkgs.lib;
     in rec {
       # `nix develop`
       devShell = pkgs.mkShell {
@@ -24,7 +25,7 @@
         name = "sprays.tf";
         version = "0.1.0";
 
-        src = ./.;
+        src = lib.sources.sourceByRegex (lib.cleanSource ./.) [".*.html" "(src|style)(/.*)?" "package.*" "Gruntfile.js"];
 
         buildInputs = with pkgs; [nodejs_20];
         buildPhase = ''
