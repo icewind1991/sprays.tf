@@ -1,7 +1,7 @@
 {
   inputs = {
     utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/release-22.11";
+    nixpkgs.url = "nixpkgs/release-23.05";
   };
 
   outputs = {
@@ -13,11 +13,11 @@
       pkgs = (import nixpkgs) {
         inherit system;
       };
-      nodeDependencies = (pkgs.callPackage ./default.nix { nodejs = pkgs.nodejs-14_x; }).nodeDependencies;
+      nodeDependencies = (pkgs.callPackage ./default.nix { nodejs = pkgs.nodejs_20; }).nodeDependencies;
     in rec {
       # `nix develop`
       devShell = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [nodejs-14_x node2nix];
+        nativeBuildInputs = with pkgs; [nodejs_20 node2nix];
       };
 
       packages.spraystf = pkgs.stdenv.mkDerivation rec {
@@ -26,7 +26,7 @@
 
         src = ./.;
 
-        buildInputs = with pkgs; [nodejs-14_x];
+        buildInputs = with pkgs; [nodejs_20];
         buildPhase = ''
           ln -s ${nodeDependencies}/lib/node_modules ./node_modules
           export PATH="${nodeDependencies}/bin:$PATH"
