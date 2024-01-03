@@ -1,7 +1,7 @@
 {
   inputs = {
     utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/release-23.05";
+    nixpkgs.url = "nixpkgs/release-23.11";
   };
 
   outputs = {
@@ -10,37 +10,24 @@
     utils,
   }:
     utils.lib.eachDefaultSystem (system: let
-      pkgs = (import nixpkgs) {
-        inherit system;
+      overlays = [
+        (import ./overlay.nix)
+      ];
+      pkgs = import nixpkgs {
+        inherit system overlays;
       };
-      nodeDependencies = (pkgs.callPackage ./default.nix { nodejs = pkgs.nodejs_20; }).nodeDependencies;
       lib = pkgs.lib;
     in rec {
       # `nix develop`
-      devShell = pkgs.mkShell {
+      devShells.default = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [nodejs_20 node2nix];
       };
 
-      packages.spraystf = pkgs.stdenv.mkDerivation rec {
-        name = "sprays.tf";
-        version = "0.1.0";
-
-        src = lib.sources.sourceByRegex (lib.cleanSource ./.) [".*.html" "(src|style)(/.*)?" "package.*" "Gruntfile.js"];
-
-        buildInputs = with pkgs; [nodejs_20];
-        buildPhase = ''
-          ln -s ${nodeDependencies}/lib/node_modules ./node_modules
-          export PATH="${nodeDependencies}/bin:$PATH"
-
-          ${nodeDependencies}/bin/grunt
-        '';
-
-        installPhase = ''
-          mkdir -p $out
-          cp index.html $out/
-          cp -r build $out/
-        '';
+      packages = rec {
+        spraystf = pkgs.spraystf;
+        default = spraystf;
       };
-      defaultPackage = packages.spraystf;
-    });
+    }) // {
+      overlays.default = import ./overlay.nix;
+    };
 }
